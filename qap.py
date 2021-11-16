@@ -95,7 +95,7 @@ class QAP:
     def heuristic(self, last_node_visited, node_to_be_added):
         flow = self.flow[last_node_visited][node_to_be_added]
         normalized_flow = NormalizeData(self.min_flow, self.max_flow, flow)
-        return flow, normalized_flow
+        return normalized_flow
 
     def solve_qap(self):
         """
@@ -124,7 +124,7 @@ class QAP:
                 for seed in seeds:
                     best_list, best = AC.aco(m=n_ants, T=iterations, r=r, a=a, b=b, 
                                             eval_f=self.eval_func, seed=seed, init_pos_f=self.generate_init_positions,
-                                            nodes=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], heuristic=self.heuristic)
+                                            nodes=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], heuristic_f=self.heuristic)
 
         #             plt.plot(range(len(best_list)), best_list, label=str(seed))
         #             plt.legend()
@@ -142,7 +142,7 @@ class QAP:
        
         
 if __name__ == "__main__":
-    QAP = QAP(is_debug=False)
+    QAP = QAP(is_debug=True)
 
     # Global optimum: 2570
     QAP.solve_qap()
