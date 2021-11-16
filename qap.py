@@ -60,6 +60,7 @@ def generate_sq_tbl(currState):
         x_t[currState[index]-1][index] = 1
     return x_t
 
+
 class QAP:
 
     def __init__(self, is_debug):
@@ -74,6 +75,15 @@ class QAP:
         score = np.trace(reduce(np.dot, [self.flow, x_t, self.dist, x_t.T]))
         # print(score)
         return score
+    
+    def generate_init_positions(self, seed, m):
+        """
+        Generates the initial ant position.
+        """
+        departments = list(range(1,21))
+        rng = np.random.default_rng(seed)
+        positions = [rng.choice(departments) for _ in range(m)]
+        return positions
 
     def solve_qap(self):
         """
@@ -84,35 +94,44 @@ class QAP:
         data = []
 
         headers = ['iterations', 'h', 776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
-        seeds = [776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
-        iterations_list=[500]
-        # t_size_list=[9, 10, 11]
-        t_size_list=[11]
+        seeds = [776]
+        # seeds = [776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
+        iterations_list=[1]
+        n_ants_list=[5]
+        a = 0.5
+        b = 0.5
+        r = 0.1
 
         for iterations in iterations_list:
-            for idx,t_size in enumerate(t_size_list):
-                plt.subplot(1,len(t_size_list),idx+1)
-                plt.title('h = {:}'.format(t_size))
+            for idx, n_ants in enumerate(n_ants_list):
+                # plt.subplot(1,len(n_ants_list),idx+1)
+                # plt.title('ants = {:}, iterations = {:}'.format(n_ants, iterations))
+                # plt.xlabel('iterations')
+                # plt.ylabel('score')
                 best_per_seed = []
                 for seed in seeds:
-                    best_list, best = AC.aco(eval_f=self.eval_func, seed=seed)
+                    best_list, best = AC.aco(m=n_ants, T=iterations, r=r, a=a, b=b, 
+                                            eval_f=self.eval_func, seed=seed, init_pos_f=self.generate_init_positions,
+                                            nodes=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
 
-                    plt.plot(range(len(best_list)), best_list, label=str(seed))
-                    plt.legend()
+        #             plt.plot(range(len(best_list)), best_list, label=str(seed))
+        #             plt.legend()
 
-                    print("Best solution: ", best)
-                    best_per_seed.append(best)
+        #             print("Best solution: ", best)
+        #             best_per_seed.append(best)
 
-                tmp = [iterations, t_size]
-                tmp.extend(best_per_seed)
-                data.append(tmp)
-        df= pd.DataFrame(data=data, columns= list(map(str, headers)))
-        print(df)
-        df.to_excel("../tabu_10_seeds_t11_best_so_far.xlsx")
+        #         tmp = [iterations, n_ants]
+        #         tmp.extend(best_per_seed)
+        #         data.append(tmp)
+        #     plt.show()
+        # df= pd.DataFrame(data=data, columns= list(map(str, headers)))
+        # print(df)
+        # df.to_excel("../tabu_10_seeds_t11_best_so_far.xlsx")
        
-        plt.show()
-            
+        
 if __name__ == "__main__":
     QAP = QAP(is_debug=False)
-    # QAP.solve_qap()
+
+    # Global optimum: 2570
+    QAP.solve_qap()
     # print(QAP.eval_func([10,12,8,9,11,6,5,3,13,1,15,4,14,2,7,16,17,18,19,20]))
