@@ -4,11 +4,15 @@ class Ant_Colony:
 
     def __init__(self, is_debug) -> None:
         self.is_debug = is_debug
+        self.pheromone_tbl = None
     
-    def initialize_pheromone_tbl(self):
-        pass
+    def initialize_pheromone_tbl(self, nodes):
+        size = len(nodes)
+        pheromone_tbl = np.full((size, size), 1/size**2)
+        np.fill_diagonal(pheromone_tbl, 0, wrap=False)
+        return pheromone_tbl
     
-    def aco(self, m, T, r, a, b, eval_f, seed, init_pos_f, nodes):
+    def aco(self, m, T, r, a, b, eval_f, seed, init_pos_f, nodes, heuristic):
         """
         Ant colony optimization algorithm
 
@@ -20,8 +24,9 @@ class Ant_Colony:
             b: relative importance of heuristic
         """
         ants = []
-
         initial_positions = init_pos_f(seed, m)
+        self.pheromone_tbl = self.initialize_pheromone_tbl(nodes)
+        print(f"Initial pheromone table:\n{self.pheromone_tbl}\nShape: {self.pheromone_tbl.shape}")
         print(f"Initial positions for {m} ants: {initial_positions} ")
 
         for pos in initial_positions:
@@ -30,8 +35,9 @@ class Ant_Colony:
             ants.append(ant)
         
         for ant in ants:
-            print(ant.path, ant.available_nodes)
+            print(f"Ant path so far: {ant.path}\nAvailable nodes: {ant.available_nodes}")
 
+        flow, normalized_flow = heuristic(6,0)
 class Ant:
 
     def __init__(self, is_debug, nodes) -> None:
