@@ -1,4 +1,5 @@
 import numpy as np
+from random import shuffle
 
 class Ant_Colony:
 
@@ -8,11 +9,11 @@ class Ant_Colony:
     
     def initialize_pheromone_tbl(self, nodes):
         size = len(nodes)
-        pheromone_tbl = np.full((size, size), 1/size**2)
+        pheromone_tbl = np.full((size, size), 150/size**2)
         np.fill_diagonal(pheromone_tbl, 0, wrap=False)
         return pheromone_tbl
     
-    def aco(self, m, T, r, a, b, eval_f, seed, init_pos_f, nodes, heuristic_f):
+    def aco(self, m, T, r, a, b, eval_f, rng, init_pos_f, nodes, heuristic_f):
         """
         Ant colony optimization algorithm
 
@@ -23,35 +24,85 @@ class Ant_Colony:
             a: relative importance of pheromone
             b: relative importance of heuristic
         """
-        ants = []
-        initial_positions = init_pos_f(seed, m)
+
+        best_ant_evaluations = []
+        best_score_so_far = 1e15
+        self.best_ant = None
         self.pheromone_tbl = self.initialize_pheromone_tbl(nodes)
         if self.is_debug:
             print(f"Initial pheromone table:\n{self.pheromone_tbl}\nShape: {self.pheromone_tbl.shape}")
-            print(f"Initial positions for {m} ants: {initial_positions} ")
-
-        for pos in initial_positions:
-            ant = Ant(is_debug=self.is_debug, nodes=nodes, colony_obj=self)
-            ant.set_initial_position(pos)
-            ants.append(ant)
         
-        if self.is_debug:
-            for ant in ants:
-                print(f"Ant path so far: {ant.path}\nAvailable nodes: {ant.available_nodes}")
+        for it in range(T):
 
-        ants[0].move(a,b, heuristic_f)
+            initial_positions = init_pos_f(rng, m)
+            ants = []
+
+            for pos in initial_positions:
+                # shuffle(nodes)
+                ant = Ant(is_debug=self.is_debug, nodes=nodes, colony_obj=self)
+                ant.set_initial_position(pos)
+                ants.append(ant)
+
+            pheromone_tables = []
+
+            for idx, ant in enumerate(ants):
+                while ant.available_nodes:
+                    ant.move(a,b, heuristic_f)
+                ant_evaluation = eval_f(ant.solution)
+
+                if ant_evaluation < best_score_so_far:
+                    best_score_so_far = ant_evaluation
+                    self.best_ant = ant
+            
+                size = len(nodes)
+                temp_pheromone_tbl = np.zeros((size, size))
+
+            
+                for move in ant.moves_taken:
+                    temp_pheromone_tbl[move[0]-1][move[1]-1] = 1e-6*ant_evaluation
+
+                pheromone_tables.append(temp_pheromone_tbl.copy())
+
+                if self.is_debug:
+                    print(f"~~Ant {idx} scored {ant_evaluation}.")
+                    print(f"~~Ant {idx}'s solution: {ant.solution}.")
+                    print(f"~~Ant {idx}'s moves taken: {ant.moves_taken}.")
+
+            total_pheromone_tbl = np.add.reduce(pheromone_tables)
+
+            if self.is_debug:
+                # print(f"Pheromone tables: {pheromone_tables}, shape: {len(pheromone_tables)}")
+                print(f"Pheromone tables total: {total_pheromone_tbl}, shape: {total_pheromone_tbl.shape}")
+            
+            # Pheromone online update
+            self.pheromone_tbl = np.add(r*self.pheromone_tbl, total_pheromone_tbl)
+
+            if self.is_debug:
+                print(f'The new pheromone table is: {self.pheromone_tbl}')
+            
+            best_ant_evaluations.append(best_score_so_far)
+
+            # for ant in ants:
+            #     print(f"Path taken: {ant.solution}")
+        # print(f'The final pheromone table is: {self.pheromone_tbl}')
+        # print(f"Best ant's score after {it+1} iterations: {best_score_so_far} ")
+
+        
+
+        return best_ant_evaluations, self.best_ant.solution
+            
 class Ant:
 
     def __init__(self, is_debug, nodes, colony_obj) -> None:
         self.colony = colony_obj
         self.is_debug = is_debug
-        self.path = []
+        self.solution = []
+        self.moves_taken = []
         self.available_nodes = nodes.copy()
-        self.from_node = None
         self.current_node = None
     
     def set_initial_position(self, pos):
-        self.path.append(pos)
+        self.solution.append(pos)
         self.available_nodes.remove(pos)
         self.current_node = pos
     
@@ -75,11 +126,13 @@ class Ant:
         
         # Move
         self.current_node = move[1]
-        self.path.append(move[1])
-        self.from_node = move[0]
+        self.solution.append(move[1])
+        self.available_nodes.remove(move[1])
+        self.moves_taken.append((move[0], move[1]))
 
         if self.is_debug:
-            print(f"The path so far is {self.path}")
+            print(f"The solution so far is {self.solution}")
+            print(f"The available moves are: {self.available_nodes}")
         
     
     def deposit_pheromone(self, amount):

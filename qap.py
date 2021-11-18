@@ -70,7 +70,7 @@ class QAP:
         self.flow, self.dist = parse_data()
         self.min_flow = np.min(self.flow)
         self.max_flow = np.max(self.flow)
-        print(self.flow)
+        # print(self.flow)
 
     def eval_func(self, currState):
         """https://en.wikipedia.org/wiki/Quadratic_assignment_problem
@@ -81,12 +81,11 @@ class QAP:
         # print(score)
         return score
     
-    def generate_init_positions(self, seed, m):
+    def generate_init_positions(self, rng, m):
         """
         Generates the initial ant position.
         """
         departments = list(range(1,21))
-        rng = np.random.default_rng(seed)
         positions = [rng.choice(departments) for _ in range(m)]
         return positions
     
@@ -106,43 +105,44 @@ class QAP:
         data = []
 
         headers = ['iterations', 'h', 776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
-        seeds = [776]
+        seeds = [776, 12, 234, 9238]
         # seeds = [776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
-        iterations_list=[1]
-        n_ants_list=[5]
-        a = 0.5
-        b = 0.5
-        r = 0.1
+        iterations_list=[35]
+        n_ants_list=[35]
+        a = 0.55
+        b = 0.45
+        r = 0.8
 
         for iterations in iterations_list:
             for idx, n_ants in enumerate(n_ants_list):
                 # plt.subplot(1,len(n_ants_list),idx+1)
-                # plt.title('ants = {:}, iterations = {:}'.format(n_ants, iterations))
-                # plt.xlabel('iterations')
-                # plt.ylabel('score')
+                plt.title('ants = {:}, iterations = {:}'.format(n_ants, iterations))
+                plt.xlabel('iterations')
+                plt.ylabel('score')
                 best_per_seed = []
                 for seed in seeds:
-                    best_list, best = AC.aco(m=n_ants, T=iterations, r=r, a=a, b=b, 
-                                            eval_f=self.eval_func, seed=seed, init_pos_f=self.generate_init_positions,
+                    rng = np.random.default_rng(seed)
+                    best_ant_evaluations, best_solution = AC.aco(m=n_ants, T=iterations, r=r, a=a, b=b, 
+                                            eval_f=self.eval_func, rng=rng, init_pos_f=self.generate_init_positions,
                                             nodes=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], heuristic_f=self.heuristic)
 
-        #             plt.plot(range(len(best_list)), best_list, label=str(seed))
-        #             plt.legend()
+                    plt.plot(range(len(best_ant_evaluations)), best_ant_evaluations, label=str(seed))
+                    plt.legend()
 
-        #             print("Best solution: ", best)
-        #             best_per_seed.append(best)
+                    print("Best solution: ", min(best_ant_evaluations))
+                    best_per_seed.append(min(best_ant_evaluations))
 
-        #         tmp = [iterations, n_ants]
-        #         tmp.extend(best_per_seed)
-        #         data.append(tmp)
-        #     plt.show()
+                tmp = [iterations, n_ants]
+                tmp.extend(best_per_seed)
+                data.append(tmp)
+            plt.show()
         # df= pd.DataFrame(data=data, columns= list(map(str, headers)))
         # print(df)
         # df.to_excel("../tabu_10_seeds_t11_best_so_far.xlsx")
        
         
 if __name__ == "__main__":
-    QAP = QAP(is_debug=True)
+    QAP = QAP(is_debug=False)
 
     # Global optimum: 2570
     QAP.solve_qap()
