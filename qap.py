@@ -63,14 +63,18 @@ def generate_sq_tbl(currState):
 def NormalizeData(min, max, point):
     return (point - min) / (max - min)
 
+def alpha_tbl_Doritto(distance, flow):
+    distance = np.sum(distance, axis=1)
+    flow = np.sum(flow, axis=1)
+    alpha = np.outer(distance, flow.T)
+    return alpha
+
 class QAP:
 
     def __init__(self, is_debug):
         self.is_debug = is_debug
         self.flow, self.dist = parse_data()
-        self.min_flow = np.min(self.flow)
-        self.max_flow = np.max(self.flow)
-        # print(self.flow)
+        alpha_tbl = alpha_tbl_Doritto(self.dist, self.flow)
 
     def eval_func(self, currState):
         """https://en.wikipedia.org/wiki/Quadratic_assignment_problem
@@ -78,7 +82,6 @@ class QAP:
         """
         x_t = generate_sq_tbl(currState)
         score = np.trace(reduce(np.dot, [self.flow, x_t, self.dist, x_t.T]))
-        # print(score)
         return score
     
     def generate_init_positions(self, rng, m):
@@ -92,9 +95,8 @@ class QAP:
 
     
     def heuristic(self, last_node_visited, node_to_be_added):
-        flow = self.flow[last_node_visited][node_to_be_added]
-        normalized_flow = NormalizeData(self.min_flow, self.max_flow, flow)
-        return normalized_flow
+        flow = self.flow[last_node_visited][node_to_be_added] + 0.0001
+        return flow
 
     def solve_qap(self):
         """
@@ -104,18 +106,19 @@ class QAP:
         AC = Ant_Colony(is_debug=self.is_debug)
         data = []
 
-        headers = ['iterations', 'h', 776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
-        seeds = [776, 12, 234, 9238]
-        # seeds = [776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
-        iterations_list=[35]
-        n_ants_list=[35]
-        a = 0.55
-        b = 0.45
-        r = 0.8
+        headers = ['iterations', 'ants', 'α', 'β', 'ρ', 776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
+        seeds = [776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
+        iterations_list=[200]
+        n_ants_list=[25]
+        a = 1
+        b = 1
+        r = 0.75
+        q0 = 0.15
+        xi = 0.1
 
         for iterations in iterations_list:
             for idx, n_ants in enumerate(n_ants_list):
-                # plt.subplot(1,len(n_ants_list),idx+1)
+                plt.subplot(1,2,1)
                 plt.title('ants = {:}, iterations = {:}'.format(n_ants, iterations))
                 plt.xlabel('iterations')
                 plt.ylabel('score')
@@ -124,21 +127,26 @@ class QAP:
                     rng = np.random.default_rng(seed)
                     best_ant_evaluations, best_solution = AC.aco(m=n_ants, T=iterations, r=r, a=a, b=b, 
                                             eval_f=self.eval_func, rng=rng, init_pos_f=self.generate_init_positions,
-                                            nodes=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], heuristic_f=self.heuristic)
+                                            nodes=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], heuristic_f=self.heuristic, q0 = q0, xi=xi,
+                                            elitism_strategy = "best_so_far")
 
                     plt.plot(range(len(best_ant_evaluations)), best_ant_evaluations, label=str(seed))
                     plt.legend()
 
-                    print("Best solution: ", min(best_ant_evaluations))
+                    print(f"Best solution: {min(best_ant_evaluations)}\nPath: {best_solution}", )
                     best_per_seed.append(min(best_ant_evaluations))
 
-                tmp = [iterations, n_ants]
+                tmp = [iterations, n_ants, a, b, r]
                 tmp.extend(best_per_seed)
                 data.append(tmp)
+            plt.subplot(1,2,2)
+            plt.title('Best solutions')
+            plt.ylabel('score')
+            plt.boxplot(best_per_seed)
             plt.show()
-        # df= pd.DataFrame(data=data, columns= list(map(str, headers)))
-        # print(df)
-        # df.to_excel("../tabu_10_seeds_t11_best_so_far.xlsx")
+        df= pd.DataFrame(data=data, columns= list(map(str, headers)))
+        print(df)
+        df.to_excel("../ACO_m25_i200_10seeds_q015_xi01_best_so_far_deposits.xlsx")
        
         
 if __name__ == "__main__":
@@ -146,4 +154,3 @@ if __name__ == "__main__":
 
     # Global optimum: 2570
     QAP.solve_qap()
-    # print(QAP.eval_func([10,12,8,9,11,6,5,3,13,1,15,4,14,2,7,16,17,18,19,20]))

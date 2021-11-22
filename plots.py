@@ -6,62 +6,62 @@ import matplotlib.pyplot as plt
 matplotlib.rc("font", family="monospace")
 # import seaborn as sns
 
-column_names = ['iterations', 'h', 776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
+column_names = ['iterations', 'ants', 'α', 'β', 'ρ', 776, 12, 234, 9238, 123556, 59933, 98232, 85732, 5432, 12291]
 
-df = pd.read_excel("../tabu_10_seeds_t11_random_restart_best_so_far.xlsx")
+df = pd.read_excel("../ACO_m15_i200_10seeds_varp.xlsx")
 problem = "QAP"
 
 fig = plt.figure(figsize=(10, 5))
 
 # Effect of ps
-grouped = pd.melt(df, id_vars=["h"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
-grouped = grouped[grouped["h"] == 9]
+grouped = pd.melt(df, id_vars=["ants"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
+grouped = grouped[grouped["ants"] == 10]
 plt.subplot(1,3,1)
-plt.title('h = 9')
+plt.title('ants = 10')
 # plt.yscale('log')
 boxplot = grouped.boxplot(column="value")
 
-grouped = pd.melt(df, id_vars=["h"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
-grouped = grouped[grouped["h"] == 10]
+grouped = pd.melt(df, id_vars=["ants"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
+grouped = grouped[grouped["ants"] == 15]
 plt.subplot(1,3,2)
-plt.title('h = 10')
+plt.title('ants = 15')
 # plt.yscale('log')
 boxplot = grouped.boxplot(column="value")
 
-grouped = pd.melt(df, id_vars=["h"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
-grouped = grouped[grouped["h"] == 11]
+grouped = pd.melt(df, id_vars=["ants"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
+grouped = grouped[grouped["ants"] == 25]
 plt.subplot(1,3,3)
-plt.title('h = 11')
+plt.title('ants = 25')
 # plt.yscale('log')
 boxplot = grouped.boxplot(column="value")
 
-plt.suptitle("Impact of tabu list size (h) on TS for the " + problem)
+plt.suptitle("Impact of #ants (m) on ACO for the " + problem)
 plt.show()
 
 
 # Effect of size change frequency
-grouped = pd.melt(df, id_vars=["restart f"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
-grouped = grouped[grouped["restart f"] == 10]
+grouped = pd.melt(df, id_vars=["τ0"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
+grouped = grouped[grouped["τ0"] == "5/f(s)"]
 plt.subplot(1,3,1)
-plt.title('random restart every = 10 iterations')
+plt.title('Initial pheromone = 5/f(s)')
 # plt.yscale('log')
 boxplot = grouped.boxplot(column="value")
 
-grouped = pd.melt(df, id_vars=["restart f"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
-grouped = grouped[grouped["restart f"] == 50]
+grouped = pd.melt(df, id_vars=["τ0"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
+grouped = grouped[grouped["τ0"] == "1/f(s)"]
 plt.subplot(1,3,2)
-plt.title('random restart every = 50 iterations')
+plt.title('Initial pheromone = 1/f(s)')
 # plt.yscale('log')
 boxplot = grouped.boxplot(column="value")
 
-grouped = pd.melt(df, id_vars=["restart f"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
-grouped = grouped[grouped["restart f"] == 100]
+grouped = pd.melt(df, id_vars=["τ0"],value_vars=["776", "12", "234", "9238", "123556", "59933", "98232", "85732", "5432", "12291"])
+grouped = grouped[grouped["τ0"] == "1/(5f(s))"]
 plt.subplot(1,3,3)
-plt.title('random restart every = 100 iterations')
+plt.title('Initial pheromone = 1/(5f(s))')
 # plt.yscale('log')
 boxplot = grouped.boxplot(column="value")
 
-plt.suptitle("Impact of random restart frequency on TS for the " + problem)
+plt.suptitle("Impact of the initial pheromone value on the ACO for the " + problem)
 plt.show()
 
 
